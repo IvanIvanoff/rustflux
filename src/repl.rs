@@ -4,40 +4,39 @@ use self::rustyline::Editor;
 use self::rustyline::error::ReadlineError;
 
 fn input(prompt: &str, editor: &mut Editor<()>) -> Result<String, ReadlineError> {
-  let line = editor.readline(prompt);
+    let line = editor.readline(prompt);
 
-  match line {
-    Ok(text) => {
-      editor.add_history_entry(&text);
-      Ok(text)
-    },
-    Err(ReadlineError::Interrupted) => {
-      println!("CTRL-C");
-      Err(ReadlineError::Interrupted)
-    },
-    Err(ReadlineError::Eof) => {
-      println!("CTRL-D");
-      Err(ReadlineError::Eof)
-    },
-    Err(err) => {
-      println!("Error: {:?}", err);
-      Err(err)
+    match line {
+        Ok(text) => {
+            editor.add_history_entry(&text);
+            Ok(text)
+        }
+        Err(ReadlineError::Interrupted) => {
+            println!("CTRL-C");
+            Err(ReadlineError::Interrupted)
+        }
+        Err(ReadlineError::Eof) => {
+            println!("CTRL-D");
+            Err(ReadlineError::Eof)
+        }
+        Err(err) => {
+            println!("Error: {:?}", err);
+            Err(err)
+        }
     }
-  }
 }
 
 pub fn start() {
-  let mut editor = Editor::<()>::new();
+    let mut editor = Editor::<()>::new();
 
-  loop {
-    match input("> ", &mut editor) {
-      Ok(input) => {
-        println!("Got input - {}", input);
-        ::interpreter::execute(input);
-      },
-      Err(err) => {
-        break;
-      }
+    loop {
+        match input("> ", &mut editor) {
+            Ok(input) => {
+                ::interpreter::execute(input);
+            }
+            Err(err) => {
+                break;
+            }
+        }
     }
-  }
 }

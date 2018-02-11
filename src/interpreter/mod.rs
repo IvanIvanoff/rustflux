@@ -1,10 +1,10 @@
-use command::Command;
+use command::{Command, CommandError};
+use std::str::FromStr;
 
 ///
 pub fn execute(line: String) {
-  println!("GOT {}", line);
-}
-
-fn parse_command(line: &str) -> Command {
-  Command::Unknown(String::from("hahaha"))
+    match Command::from_str(&line) {
+        Ok(command) => println!("{}", command),
+        Err(err) => println!("Error exectuing {:?}", err),
+    }
 }
