@@ -1,14 +1,12 @@
 use std::str::FromStr;
 use std::fmt;
-
-#[derive(Debug)]
-pub enum CommandError {
-}
+use errors::RustfluxError;
 
 pub enum Command {
     IgnoreEmptyLine,
     Connect(String),
     Use(String),
+    DownloadMeasurement(String),
     ShowDatabases,
     ShowMeasurements,
     ShowTagsMeasurement(String),
@@ -17,7 +15,7 @@ pub enum Command {
     Info,
 }
 
-fn is_same_command(commands: Vec<&str>, input: &Vec<&str>) -> bool {
+fn is_same_command(commands: Vec<&str>, input: &[&str]) -> bool {
     if input.len() >= commands.len() {
         input.iter().zip(commands).all(|(s1, s2)| s1 == &s2)
     } else {
@@ -26,12 +24,12 @@ fn is_same_command(commands: Vec<&str>, input: &Vec<&str>) -> bool {
 }
 
 impl FromStr for Command {
-    type Err = CommandError;
+    type Err = RustfluxError;
 
     fn from_str(line: &str) -> Result<Self, Self::Err> {
         let words = line.split_whitespace().collect::<Vec<&str>>();
 
-        if words.len() == 0 {
+        if words.is_empty() {
             Ok(Command::IgnoreEmptyLine)
         } else if words.len() == 1 && is_same_command(vec!["info"], &words) {
             Ok(Command::Info)
@@ -45,6 +43,8 @@ impl FromStr for Command {
             Ok(Command::ShowDatabases)
         } else if words.len() == 2 && is_same_command(vec!["show", "measurements"], &words) {
             Ok(Command::ShowMeasurements)
+        } else if words.len() == 2 && is_same_command(vec!["download"], &words) {
+            Ok(Command::DownloadMeasurement(String::from(words[1])))
         } else if words.len() == 5 && is_same_command(vec!["show", "tag", "keys", "from"], &words) {
             Ok(Command::ShowTagsMeasurement(String::from(words[4])))
         } else {
@@ -61,18 +61,21 @@ impl fmt::Debug for Command {
 
 impl fmt::Display for Command {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &Command::IgnoreEmptyLine => Ok(()),
-            &Command::Connect(ref host) => write!(f, "Connecting to host {}", host),
-            &Command::Use(ref db) => write!(f, "Use {}", db),
-            &Command::ShowDatabases => write!(f, "Showing the databases"),
-            &Command::ShowMeasurements => write!(f, "Showing the measurements"),
-            &Command::ShowTagsMeasurement(ref measurement) => {
+        match *self {
+            Command::IgnoreEmptyLine => Ok(()),
+            Command::Connect(ref host) => write!(f, "Connecting to host {}", host),
+            Command::Use(ref db) => write!(f, "Use {}", db),
+            Command::DownloadMeasurement(ref measurement) => {
+                write!(f, "Download measurement {}", measurement)
+            }
+            Command::ShowDatabases => write!(f, "Showing the databases"),
+            Command::ShowMeasurements => write!(f, "Showing the measurements"),
+            Command::ShowTagsMeasurement(ref measurement) => {
                 write!(f, "Showing the tags from measurement {}", measurement)
             }
-            &Command::Unknown(ref line) => write!(f, "Ignoring unknown command - {}", line),
-            &Command::Help => write!(f, "Showing help"),
-            &Command::Info => write!(f, "Showing info"),
+            Command::Unknown(ref line) => write!(f, "Ignoring unknown command - {}", line),
+            Command::Help => write!(f, "Showing help"),
+            Command::Info => write!(f, "Showing info"),
         }
     }
 }

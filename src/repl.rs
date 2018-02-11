@@ -4,6 +4,7 @@ use self::rustyline::Editor;
 use self::rustyline::error::ReadlineError;
 use interpreter;
 use context::Context;
+use errors::RustfluxError;
 
 fn input(prompt: &str, editor: &mut Editor<()>) -> Result<String, ReadlineError> {
     let line = editor.readline(prompt);
@@ -28,19 +29,20 @@ fn input(prompt: &str, editor: &mut Editor<()>) -> Result<String, ReadlineError>
     }
 }
 
-pub fn start() {
+pub fn start() -> Result<(), RustfluxError> {
     let mut editor = Editor::<()>::new();
 
-    // TODO: Fix
-    let mut context = Context::new().unwrap();
+    let mut context = Context::new()?;
 
     loop {
         match input("> ", &mut editor) {
             Ok(input) => {
-                interpreter::execute(&mut context, input);
+                interpreter::execute(&mut context, &input)?;
             }
-            Err(_err) => {
-                break;
+            Err(_) => {
+                return Err(RustfluxError::InputParse(String::from(
+                    "Cannot parse the input",
+                )))
             }
         }
     }

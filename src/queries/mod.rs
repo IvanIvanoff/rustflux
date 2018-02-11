@@ -17,3 +17,7 @@ pub fn show_tags_from_measurement(host: &str, db: &str, measurement: &str) -> St
 pub fn show_measurements(host: &str, db: &str) -> String {
     host.to_string() + "/query?db=" + db + "&q=show measurements"
 }
+
+pub fn measurement(host: &str, db: &str, measurement: &str) -> String {
+    host.to_string() + "/query?db=" + db + "&q=select * from " + measurement
+}

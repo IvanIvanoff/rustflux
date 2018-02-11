@@ -3,6 +3,7 @@ extern crate reqwest;
 
 use colored::*;
 
+mod errors;
 mod http_client;
 mod decoder;
 mod repl;
@@ -14,7 +15,7 @@ mod queries;
 fn main() {
     println!("{}", "\nInteractive influxdb tool \n".yellow());
 
-    repl::start();
+    let _ = repl::start();
 
     // let url = String::from("http://localhost:8086");
     // let db = String::from("prices");
