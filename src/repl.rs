@@ -39,7 +39,7 @@ pub fn start() {
             Ok(input) => {
                 interpreter::execute(&mut context, input);
             }
-            Err(err) => {
+            Err(_err) => {
                 break;
             }
         }
