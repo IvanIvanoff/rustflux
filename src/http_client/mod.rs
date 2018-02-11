@@ -20,7 +20,8 @@ pub fn post(url: &str) -> Result<String, RustfluxError> {
     }
 }
 
-///
+// Helper functions
+
 fn post_internal(url: &str) -> Result<String, reqwest::Error> {
     let client = reqwest::Client::new();
     let response = client.post(url).send()?;
@@ -31,7 +32,6 @@ fn post_internal(url: &str) -> Result<String, reqwest::Error> {
     }
 }
 
-// Helper functions
 fn get_internal(url: &str) -> Result<String, reqwest::Error> {
     let mut resp = reqwest::get(url)?;
     let body = resp.text()?;
