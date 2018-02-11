@@ -2,6 +2,8 @@ extern crate rustyline;
 
 use self::rustyline::Editor;
 use self::rustyline::error::ReadlineError;
+use interpreter;
+use context::Context;
 
 fn input(prompt: &str, editor: &mut Editor<()>) -> Result<String, ReadlineError> {
     let line = editor.readline(prompt);
@@ -29,10 +31,13 @@ fn input(prompt: &str, editor: &mut Editor<()>) -> Result<String, ReadlineError>
 pub fn start() {
     let mut editor = Editor::<()>::new();
 
+    // TODO: Fix
+    let mut context = Context::new().unwrap();
+
     loop {
         match input("> ", &mut editor) {
             Ok(input) => {
-                ::interpreter::execute(input);
+                interpreter::execute(&mut context, input);
             }
             Err(err) => {
                 break;

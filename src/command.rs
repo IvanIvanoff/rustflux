@@ -15,7 +15,7 @@ pub enum Command {
     ShowTagsMeasurement(String),
     Unknown(String),
     Help,
-    Quit,
+		Info,
 }
 
 fn is_same_command(commands: Vec<&str>, input: &Vec<&str>) -> bool {
@@ -37,7 +37,11 @@ impl FromStr for Command {
             Ok(Command::ShowDatabases)
         } else if words.len() == 2 && is_same_command(vec!["show", "measurements"], &words) {
             Ok(Command::ShowMeasurements)
-        } else {
+				} else if words.len() == 2 && is_same_command(vec!["show", "tags"], &words) {
+					Ok(Command::ShowTags)
+				} else if words.len() == 3 && is_same_command(vec!["show", "tags"], &words) {
+						Ok(Command::ShowTagsMeasurement(String::from(words[3])))
+				} else {
             Ok(Command::Unknown(String::from(line)))
         }
     }
@@ -62,7 +66,7 @@ impl fmt::Display for Command {
             }
             &Command::Unknown(ref line) => write!(f, "Ignoring unknown command - {}", line),
             &Command::Help => write!(f, "Showing help"),
-            &Command::Quit => write!(f, "Quit"),
+						&Command::Info => write!(f, "Showing info"),
         }
     }
 }

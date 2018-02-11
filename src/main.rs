@@ -8,6 +8,8 @@ mod decoder;
 mod repl;
 mod interpreter;
 mod command;
+mod context;
+mod queries;
 
 fn main() {
     println!("{}", "\nInteractive influxdb tool \n".yellow());
