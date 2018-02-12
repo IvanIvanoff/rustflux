@@ -3,6 +3,7 @@ extern crate serde_json;
 use self::serde_json::{Error, Value};
 use errors::RustfluxError;
 use std::str::FromStr;
+use chrono::prelude::*;
 
 /// Accepts the JSON returned from influxdb and converts
 /// it to line protocol, suitable for sending
@@ -15,9 +16,10 @@ pub fn json_to_line_protocol(json_str: &str) -> Result<Value, RustfluxError> {
     if let Some(values) = json["results"][0]["series"][0]["values"].as_array() {
         for elem in values.iter() {
             if let Value::Array(ref arr) = *elem {
-                // TODO: Fix
-                let time = arr.first().unwrap().as_str().unwrap();
-                println!("Time is now: {:?}", time);
+                let line = String::new();
+
+                let nanoseconds = extract_time_nanoseconds(arr);
+                for elem in arr.iter().skip(1) {}
             }
         }
     }
@@ -62,6 +64,13 @@ fn extract_column_names(json: &Value) -> Result<Vec<String>, RustfluxError> {
     }
 
     Ok(result)
+}
+
+fn extract_time_nanoseconds(array: &Vec<Value>) -> i64 {
+    let time_str = array.first().unwrap().as_str().unwrap();
+    let time: DateTime<Utc> = DateTime::from_str(time_str).unwrap();
+    let nanoseconds: i64 = DateTime::timestamp(&time) * 1_000_000_000; // make nanoseconds
+    nanoseconds
 }
 
 fn json_from_str(json_str: &str) -> Result<Value, RustfluxError> {
