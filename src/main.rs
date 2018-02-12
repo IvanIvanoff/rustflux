@@ -1,3 +1,4 @@
+extern crate chrono;
 extern crate colored;
 extern crate reqwest;
 

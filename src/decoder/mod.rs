@@ -1,20 +1,33 @@
 extern crate serde_json;
+
 use self::serde_json::{Error, Value};
 use errors::RustfluxError;
+use std::str::FromStr;
 
 /// Accepts the JSON returned from influxdb and converts
 /// it to line protocol, suitable for sending
 pub fn json_to_line_protocol(json_str: &str) -> Result<Value, RustfluxError> {
+    let line_protocol: Vec<String> = Vec::new();
+
     let json = json_from_str(json_str)?;
     let columns = extract_column_names(&json)?;
-    println!("{:?}", columns);
+
+    if let Some(values) = json["results"][0]["series"][0]["values"].as_array() {
+        for elem in values.iter() {
+            if let Value::Array(ref arr) = *elem {
+                // TODO: Fix
+                let time = arr.first().unwrap().as_str().unwrap();
+                println!("Time is now: {:?}", time);
+            }
+        }
+    }
 
     Ok(json)
 }
 
-pub fn json_to_line_protocol_file(json_str: &str, _file: &str) -> Result<(), RustfluxError> {
+pub fn json_to_line_protocol_file(json_str: &str, _file: &str) -> Result<String, RustfluxError> {
     let val = json_to_line_protocol(json_str)?;
-    Ok(())
+    Ok(String::from("file-name"))
 }
 
 pub fn json_strings_to_list(json_str: &str) -> Result<Vec<String>, RustfluxError> {
@@ -22,8 +35,8 @@ pub fn json_strings_to_list(json_str: &str) -> Result<Vec<String>, RustfluxError
 
     let json = json_from_str(json_str)?;
 
-    if let Some(vec) = json["results"][0]["series"][0]["values"].as_array() {
-        for elem in vec.iter() {
+    if let Some(values) = json["results"][0]["series"][0]["values"].as_array() {
+        for elem in values.iter() {
             if let Value::Array(ref arr) = *elem {
                 // TODO: FIX
                 let s = arr.first().unwrap().as_str().unwrap();

@@ -49,8 +49,9 @@ fn get_databases(context: &mut Context) -> Result<Vec<String>, RustfluxError> {
 
     let db_list = decoder::json_strings_to_list(&databases)?;
     for db_name in &db_list {
-        result.push(db_name.to_string());
+        result.push(db_name.to_string())
     }
+
     Ok(result)
 }
 
@@ -58,6 +59,7 @@ fn show_databases(context: &mut Context) -> Result<(), RustfluxError> {
     for measurement in get_databases(context)? {
         println!("{}", measurement)
     }
+
     Ok(())
 }
 
@@ -69,7 +71,7 @@ fn get_measurements(context: &mut Context) -> Result<Vec<String>, RustfluxError>
     let measurement_list = decoder::json_strings_to_list(&measurements)?;
 
     for measurement in &measurement_list {
-        result.push(measurement.to_string());
+        result.push(measurement.to_string())
     }
     Ok(result)
 }
@@ -78,6 +80,7 @@ fn show_measurements(context: &mut Context) -> Result<(), RustfluxError> {
     for measurement in get_measurements(context)? {
         println!("{}", measurement)
     }
+
     Ok(())
 }
 
@@ -111,7 +114,7 @@ fn download_measurement(context: &mut Context, measurement: &str) -> Result<(), 
     let query = queries::measurement(&context.host, &context.database, measurement);
     let measurement = http_client::get(&query)?;
 
-    decoder::json_to_line_protocol(&measurement);
+    let file_name = decoder::json_to_line_protocol(&measurement);
 
     Ok(())
 }
