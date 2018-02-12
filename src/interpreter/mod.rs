@@ -111,5 +111,7 @@ fn download_measurement(context: &mut Context, measurement: &str) -> Result<(), 
     let query = queries::measurement(&context.host, &context.database, measurement);
     let measurement = http_client::get(&query)?;
 
+    decoder::json_to_line_protocol(&measurement);
+
     Ok(())
 }

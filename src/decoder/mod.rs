@@ -5,14 +5,15 @@ use errors::RustfluxError;
 /// Accepts the JSON returned from influxdb and converts
 /// it to line protocol, suitable for sending
 pub fn json_to_line_protocol(json_str: &str) -> Result<Value, RustfluxError> {
-    let val = json_from_str(json_str)?;
+    let json = json_from_str(json_str)?;
+    let columns = extract_column_names(&json)?;
+    println!("{:?}", columns);
 
-    Ok(val)
+    Ok(json)
 }
 
 pub fn json_to_line_protocol_file(json_str: &str, _file: &str) -> Result<(), RustfluxError> {
     let val = json_to_line_protocol(json_str)?;
-
     Ok(())
 }
 
@@ -35,6 +36,20 @@ pub fn json_strings_to_list(json_str: &str) -> Result<Vec<String>, RustfluxError
 }
 
 // Helper functions
+
+fn extract_column_names(json: &Value) -> Result<Vec<String>, RustfluxError> {
+    let mut result: Vec<String> = Vec::new();
+
+    if let Some(columns) = json["results"][0]["series"][0]["columns"].as_array() {
+        for elem in columns.iter() {
+            if let Value::String(ref s) = *elem {
+                result.push(s.to_string());
+            }
+        }
+    }
+
+    Ok(result)
+}
 
 fn json_from_str(json_str: &str) -> Result<Value, RustfluxError> {
     match serde_json::from_str(json_str) {
