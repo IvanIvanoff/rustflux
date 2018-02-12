@@ -7,6 +7,7 @@ pub enum Command {
     Connect(String),
     Use(String),
     DownloadMeasurement(String),
+    // UploadMeasurement(String),
     ShowDatabases,
     ShowMeasurements,
     ShowTagsMeasurement(String),
