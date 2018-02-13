@@ -110,11 +110,15 @@ fn show_tags_from_measurement(
     Ok(())
 }
 
-fn download_measurement(context: &mut Context, measurement: &str) -> Result<(), RustfluxError> {
-    let query = queries::measurement(&context.host, &context.database, measurement);
-    let measurement = http_client::get(&query)?;
+fn download_measurement(
+    context: &mut Context,
+    measurement_name: &str,
+) -> Result<(), RustfluxError> {
+    let query = queries::measurement(&context.host, &context.database, measurement_name);
+    let tags = get_tags_from_measurement(context, &measurement_name)?;
+    let measurement_json = http_client::get(&query)?;
 
-    let file_name = decoder::json_to_line_protocol(&measurement);
+    let file_name = decoder::json_to_line_protocol(&measurement_json, measurement_name, &tags);
 
     Ok(())
 }

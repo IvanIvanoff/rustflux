@@ -7,28 +7,53 @@ use chrono::prelude::*;
 
 /// Accepts the JSON returned from influxdb and converts
 /// it to line protocol, suitable for sending
-pub fn json_to_line_protocol(json_str: &str) -> Result<Value, RustfluxError> {
+pub fn json_to_line_protocol(
+    measurement_str: &str,
+    measurement_name: &str,
+    tags: &Vec<String>,
+) -> Result<Vec<String>, RustfluxError> {
     let line_protocol: Vec<String> = Vec::new();
 
-    let json = json_from_str(json_str)?;
+    let json = json_from_str(measurement_str)?;
     let columns = extract_column_names(&json)?;
 
-    if let Some(values) = json["results"][0]["series"][0]["values"].as_array() {
-        for elem in values.iter() {
-            if let Value::Array(ref arr) = *elem {
-                let line = String::new();
+    let values = json["results"][0]["series"][0]["values"].as_array().ok_or(
+        RustfluxError::JsonDecode(String::from("Cannot decode json")),
+    )?;
 
-                let nanoseconds = extract_time_nanoseconds(arr);
-                for elem in arr.iter().skip(1) {}
+    println!("{:?}", values);
+
+    for elem in values.iter() {
+        if let Value::Array(ref arr) = *elem {
+            let mut tag_set = String::new();
+            let mut field_set = String::new();
+
+            let nanoseconds = extract_time_nanoseconds(arr);
+            for elem in arr.iter().skip(1) {
+                match elem {
+                    &Value::String(ref s) => {
+                        let val = elem.as_str().unwrap();
+                    }
+
+                    &Value::Number(ref num) => {
+                        if num.is_f64() {
+                            let num = num.as_f64().unwrap();
+                        } else if num.is_i64() {
+                            let num = num.as_i64().unwrap();
+                        }
+                    }
+
+                    _ => {}
+                }
             }
         }
     }
 
-    Ok(json)
+    Ok(line_protocol)
 }
 
 pub fn json_to_line_protocol_file(json_str: &str, _file: &str) -> Result<String, RustfluxError> {
-    let val = json_to_line_protocol(json_str)?;
+    // let val = json_to_line_protocol(json_str)?;
     Ok(String::from("file-name"))
 }
 
