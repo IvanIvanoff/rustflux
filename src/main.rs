@@ -16,5 +16,8 @@ mod queries;
 fn main() {
     println!("{}", "\nInteractive influxdb tool \n".yellow());
 
-    let _ = repl::start();
+    match repl::start() {
+        Err(err) => println!("REPL exited with error: {}", err),
+        Ok(_) => {}
+    }
 }
