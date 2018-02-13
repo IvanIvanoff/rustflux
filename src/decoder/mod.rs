@@ -45,7 +45,7 @@ pub fn json_to_line_protocol(
                 match elem {
                     &Value::String(ref s) => {
                         let val = elem.as_str().unwrap();
-                        key_value = format!(",{}={}s", column_name, val);
+                        key_value = format!(",{}=\"{}\"", column_name, val);
                     }
 
                     &Value::Number(ref num) => {
