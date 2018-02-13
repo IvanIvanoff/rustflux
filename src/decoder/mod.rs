@@ -12,43 +12,72 @@ pub fn json_to_line_protocol(
     measurement_name: &str,
     tags: &Vec<String>,
 ) -> Result<Vec<String>, RustfluxError> {
-    let line_protocol: Vec<String> = Vec::new();
+    let mut line_protocol: Vec<String> = Vec::new();
 
     let json = json_from_str(measurement_str)?;
     let columns = extract_column_names(&json)?;
+
+    let mut column_tag: Vec<(String, bool)> = Vec::new();
+    for column in columns.iter() {
+        if tags.contains(column) {
+            column_tag.push((column.to_string(), true));
+        } else {
+            column_tag.push((column.to_string(), false));
+        }
+    }
 
     let values = json["results"][0]["series"][0]["values"].as_array().ok_or(
         RustfluxError::JsonDecode(String::from("Cannot decode json")),
     )?;
 
-    println!("{:?}", values);
-
-    for elem in values.iter() {
-        if let Value::Array(ref arr) = *elem {
+    for value in values.iter() {
+        if let Value::Array(ref arr) = *value {
             let mut tag_set = String::new();
             let mut field_set = String::new();
 
             let nanoseconds = extract_time_nanoseconds(arr);
-            for elem in arr.iter().skip(1) {
+
+            for (elem, &(ref column_name, ref is_tag)) in
+                arr.iter().skip(1).zip(column_tag.iter().skip(1))
+            {
+                let mut key_value = String::new();
+
                 match elem {
                     &Value::String(ref s) => {
                         let val = elem.as_str().unwrap();
+                        key_value = format!(",{}={}s", column_name, val);
                     }
 
                     &Value::Number(ref num) => {
                         if num.is_f64() {
                             let num = num.as_f64().unwrap();
+                            key_value = format!(",{}={}i", column_name, num);
                         } else if num.is_i64() {
                             let num = num.as_i64().unwrap();
+                            key_value = format!(",{}={}f", column_name, num);
                         }
                     }
 
                     _ => {}
                 }
+
+                if *is_tag {
+                    tag_set.push_str(&key_value);
+                } else {
+                    field_set.push_str(&key_value);
+                }
             }
+
+            field_set.remove(0);
+            let line = format!(
+                "{}{} {} {}",
+                measurement_name, tag_set, field_set, nanoseconds
+            );
+            line_protocol.push(line);
         }
     }
 
+    println!("Line protocol: {:?}", line_protocol);
     Ok(line_protocol)
 }
 
