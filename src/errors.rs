@@ -5,6 +5,7 @@ pub enum RustfluxError {
     JsonDecode(String),
     GetRequest(String),
     PostRequest(String),
+    IOError(String),
 }
 
 impl fmt::Display for RustfluxError {
@@ -18,6 +19,7 @@ impl fmt::Display for RustfluxError {
             RustfluxError::PostRequest(ref error) => {
                 write!(f, "Error sending POST request: {}", error)
             }
+            RustfluxError::IOError(ref error) => write!(f, "IO error: {}", error),
         }
     }
 }

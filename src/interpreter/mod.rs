@@ -118,7 +118,8 @@ fn download_measurement(
     let tags = get_tags_from_measurement(context, &measurement_name)?;
     let measurement_json = http_client::get(&query)?;
 
-    let file_name = decoder::json_to_line_protocol(&measurement_json, measurement_name, &tags);
+    let file_name =
+        decoder::json_to_line_protocol_file(&measurement_json, measurement_name, &tags)?;
 
     Ok(())
 }
