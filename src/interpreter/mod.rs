@@ -35,7 +35,10 @@ pub fn execute(context: &mut Context, line: &str) -> Result<(), RustfluxError> {
 
         Ok(Command::Unknown(_)) => println!("{}", command.unwrap()),
 
-        Err(err) => println!("Error exectuing '{:?}'", err),
+        Err(err) => {
+            println!("Error exectuing a command. Reason: '{:?}'", err);
+            panic!("Error executing a command")
+        }
     }
 
     Ok(())

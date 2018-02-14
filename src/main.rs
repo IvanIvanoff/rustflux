@@ -17,7 +17,7 @@ fn main() {
     println!("{}", "\nInteractive influxdb tool \n".yellow());
 
     match repl::start() {
-        Err(err) => println!("REPL exited with error: {}", err),
-        Ok(_) => {}
+        Err(err) => println!("Rustflux exited with error: {}", err),
+        Ok(_) => println!("Exiting Rustflux"),
     }
 }
