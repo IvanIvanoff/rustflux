@@ -50,7 +50,11 @@ pub fn json_to_line_protocol_file(
                 match elem {
                     &Value::String(ref s) => {
                         let val = elem.as_str().unwrap();
-                        key_value = format!(",{}=\"{}\"", column_name, val);
+                        if *is_tag {
+                            key_value = format!(",{}={}", column_name, val);
+                        } else {
+                            key_value = format!(",{}=\"{}\"", column_name, val);
+                        }
                     }
 
                     &Value::Number(ref num) => {

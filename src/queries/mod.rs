@@ -22,3 +22,7 @@ pub fn show_measurements(host: &str, db: &str) -> String {
 pub fn measurement(host: &str, db: &str, measurement: &str) -> String {
     host.to_string() + "/query?db=" + db + "&q=select * from " + measurement
 }
+
+pub fn write(host: &str, db: &str) -> String {
+    host.to_string() + "/write?db=" + db
+}

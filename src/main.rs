@@ -6,7 +6,7 @@ use colored::*;
 
 mod errors;
 mod http_client;
-mod decoder;
+mod converter;
 mod repl;
 mod interpreter;
 mod command;

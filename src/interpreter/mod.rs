@@ -3,7 +3,7 @@ use command::Command;
 use std::str::FromStr;
 use queries;
 use http_client;
-use decoder;
+use converter;
 use errors::RustfluxError;
 
 ///
@@ -22,6 +22,8 @@ pub fn execute(context: &mut Context, line: &str) -> Result<(), RustfluxError> {
         Ok(Command::DownloadMeasurement(measurement)) => {
             download_measurement(context, &measurement)?
         }
+
+        Ok(Command::UploadMeasurement(file_name)) => upload_measurement(context, &file_name)?,
 
         Ok(Command::ShowDatabases) => show_databases(context)?,
 
@@ -47,7 +49,7 @@ fn get_databases(context: &mut Context) -> Result<Vec<String>, RustfluxError> {
     let query = queries::show_databases(&context.host);
     let databases = http_client::get(&query)?;
 
-    let db_list = decoder::json_strings_to_list(&databases)?;
+    let db_list = converter::json_strings_to_list(&databases)?;
     for db_name in &db_list {
         result.push(db_name.to_string())
     }
@@ -68,7 +70,7 @@ fn get_measurements(context: &mut Context) -> Result<Vec<String>, RustfluxError>
 
     let query = queries::show_measurements(&context.host, &context.database);
     let measurements = http_client::get(&query)?;
-    let measurement_list = decoder::json_strings_to_list(&measurements)?;
+    let measurement_list = converter::json_strings_to_list(&measurements)?;
 
     for measurement in &measurement_list {
         result.push(measurement.to_string())
@@ -92,7 +94,7 @@ fn get_tags_from_measurement(
     let query = queries::show_tags_from_measurement(&context.host, &context.database, measurement);
     let tags = http_client::get(&query)?;
 
-    let tag_list = decoder::json_strings_to_list(&tags)?;
+    let tag_list = converter::json_strings_to_list(&tags)?;
     for tag in &tag_list {
         result.push(tag.to_string());
     }
@@ -119,7 +121,14 @@ fn download_measurement(
     let measurement_json = http_client::get(&query)?;
 
     let file_name =
-        decoder::json_to_line_protocol_file(&measurement_json, measurement_name, &tags)?;
+        converter::json_to_line_protocol_file(&measurement_json, measurement_name, &tags)?;
+
+    Ok(())
+}
+
+fn upload_measurement(context: &mut Context, file_name: &str) -> Result<(), RustfluxError> {
+    let url = queries::write(&context.host, &context.database);
+    http_client::post(&url, &file_name);
 
     Ok(())
 }

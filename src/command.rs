@@ -7,7 +7,7 @@ pub enum Command {
     Connect(String),
     Use(String),
     DownloadMeasurement(String),
-    // UploadMeasurement(String),
+    UploadMeasurement(String),
     ShowDatabases,
     ShowMeasurements,
     ShowTagsMeasurement(String),
@@ -46,6 +46,8 @@ impl FromStr for Command {
             Ok(Command::ShowMeasurements)
         } else if words.len() == 2 && is_same_command(vec!["download"], &words) {
             Ok(Command::DownloadMeasurement(String::from(words[1])))
+        } else if words.len() == 2 && is_same_command(vec!["upload"], &words) {
+            Ok(Command::UploadMeasurement(String::from(words[1])))
         } else if words.len() == 5 && is_same_command(vec!["show", "tag", "keys", "from"], &words) {
             Ok(Command::ShowTagsMeasurement(String::from(words[4])))
         } else {
@@ -69,11 +71,16 @@ impl fmt::Display for Command {
             Command::DownloadMeasurement(ref measurement) => {
                 write!(f, "Download measurement {}", measurement)
             }
+            Command::UploadMeasurement(ref measurement) => {
+                write!(f, "Upload measurement {}", measurement)
+            }
             Command::ShowDatabases => write!(f, "Showing the databases"),
             Command::ShowMeasurements => write!(f, "Showing the measurements"),
-            Command::ShowTagsMeasurement(ref measurement) => {
-                write!(f, "Showing the tags from measurement {}", measurement)
-            }
+            Command::ShowTagsMeasurement(ref file_name) => write!(
+                f,
+                "Showing the tags from measurement from file {}",
+                file_name
+            ),
             Command::Unknown(ref line) => write!(f, "Ignoring unknown command - {}", line),
             Command::Help => write!(f, "Showing help"),
             Command::Info => write!(f, "Showing info"),
