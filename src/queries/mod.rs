@@ -4,11 +4,6 @@ pub fn show_databases(host: &str) -> String {
 }
 
 ///
-pub fn show_tags(host: &str, db: &str) -> String {
-    host.to_string() + "/query?db=" + db + "&q=show tag keys"
-}
-
-///
 pub fn show_tags_from_measurement(host: &str, db: &str, measurement: &str) -> String {
     host.to_string() + "/query?db=" + db + "&q=show tag keys from " + measurement
 }

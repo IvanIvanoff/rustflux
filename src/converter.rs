@@ -1,6 +1,6 @@
 extern crate serde_json;
 
-use self::serde_json::{Error, Value};
+use self::serde_json::Value;
 use errors::RustfluxError;
 use std::str::FromStr;
 use chrono::prelude::*;
@@ -15,7 +15,7 @@ use std::path::Path;
 pub fn json_to_line_protocol_file(
     measurement_str: &str,
     measurement_name: &str,
-    tags: &Vec<String>,
+    tags: &[String],
 ) -> Result<String, RustfluxError> {
     let mut line_protocol: Vec<String> = Vec::new();
 
@@ -23,7 +23,7 @@ pub fn json_to_line_protocol_file(
     let columns = extract_column_names(&json)?;
 
     let mut column_tag: Vec<(String, bool)> = Vec::new();
-    for column in columns.iter() {
+    for column in &columns {
         if tags.contains(column) {
             column_tag.push((column.to_string(), true));
         } else {
@@ -31,9 +31,9 @@ pub fn json_to_line_protocol_file(
         }
     }
 
-    let values = json["results"][0]["series"][0]["values"].as_array().ok_or(
-        RustfluxError::JsonDecode(String::from("Cannot decode json")),
-    )?;
+    let values = json["results"][0]["series"][0]["values"]
+        .as_array()
+        .ok_or_else(|| RustfluxError::JsonDecode(String::from("Cannot decode json")))?;
 
     for value in values.iter() {
         if let Value::Array(ref arr) = *value {
@@ -47,9 +47,8 @@ pub fn json_to_line_protocol_file(
             {
                 let mut key_value = String::new();
 
-                match elem {
-                    &Value::String(ref s) => {
-                        let val = elem.as_str().unwrap();
+                match *elem {
+                    Value::String(ref val) => {
                         if *is_tag {
                             key_value = format!(",{}={}", column_name, val);
                         } else {
@@ -57,13 +56,15 @@ pub fn json_to_line_protocol_file(
                         }
                     }
 
-                    &Value::Number(ref num) => {
+                    Value::Number(ref num) => {
                         if num.is_f64() {
                             let num = num.as_f64().unwrap();
-                            key_value = format!(",{}={}f", column_name, num);
+                            key_value = format!(",{}={}", column_name, num);
                         } else if num.is_i64() {
                             let num = num.as_i64().unwrap();
-                            key_value = format!(",{}={}i", column_name, num);
+                            // Currently there is no query to get the field type.
+                            // As a safe alternative write all numeric data as float
+                            key_value = format!(",{}={}", column_name, num);
                         }
                     }
 
@@ -112,9 +113,9 @@ pub fn json_strings_to_list(json_str: &str) -> Result<Vec<String>, RustfluxError
 
 fn save_file_to_disk(
     measurement_name: &str,
-    line_protocol: &Vec<String>,
+    line_protocol: &[String],
 ) -> Result<String, RustfluxError> {
-    let _ = match fs::create_dir_all("/tmp/.rustflux") {
+    match fs::create_dir_all("/tmp/.rustflux") {
         Ok(_) => {}
         Err(_) => {
             return Err(RustfluxError::IOError(String::from(
@@ -131,10 +132,10 @@ fn save_file_to_disk(
         let mut file = match File::create(path) {
             Ok(file) => file,
             Err(err) => {
-                return Err(RustfluxError::IOError(String::from(format!(
+                return Err(RustfluxError::IOError(format!(
                     "Cannot create file for measurement: {}",
                     err
-                ))));
+                )));
             }
         };
 
@@ -144,8 +145,8 @@ fn save_file_to_disk(
         );
 
         for line in line_protocol.iter() {
-            file.write(line.as_bytes());
-            file.write("\n".as_bytes());
+            let _ = file.write(line.as_bytes()).unwrap();
+            let _ = file.write(b"\n").unwrap();
         }
     }
     Ok(file_name)
@@ -165,7 +166,7 @@ fn extract_column_names(json: &Value) -> Result<Vec<String>, RustfluxError> {
     Ok(result)
 }
 
-fn extract_time_nanoseconds(array: &Vec<Value>) -> i64 {
+fn extract_time_nanoseconds(array: &[Value]) -> i64 {
     let time_str = array.first().unwrap().as_str().unwrap();
     let time: DateTime<Utc> = DateTime::from_str(time_str).unwrap();
     let nanoseconds: i64 = DateTime::timestamp(&time) * 1_000_000_000; // make nanoseconds

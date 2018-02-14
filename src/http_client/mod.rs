@@ -1,8 +1,6 @@
 extern crate reqwest;
 use errors::RustfluxError;
 
-use std::io::prelude::*;
-use std::fs;
 use std::fs::File;
 
 ///
@@ -18,7 +16,7 @@ pub fn get(url: &str) -> Result<String, RustfluxError> {
 pub fn post(url: &str, file_name: &str) -> Result<String, RustfluxError> {
     match post_internal(url, file_name) {
         Ok(res) => Ok(res),
-        Err(_) => Err(RustfluxError::GetRequest(String::from(
+        Err(_) => Err(RustfluxError::PostRequest(String::from(
             "Error executing GET request",
         ))),
     }
@@ -28,16 +26,15 @@ pub fn post(url: &str, file_name: &str) -> Result<String, RustfluxError> {
 
 fn post_internal(url: &str, file_name: &str) -> Result<String, reqwest::Error> {
     let client = reqwest::Client::new();
-    let file = match File::open(file_name) {
-        Ok(file) => file,
-        Err(_) => panic!("Cannot open file for upload"), // FIX
-    };
+    let file = File::open(file_name).unwrap();
 
     let response = client.post(url).body(file).send()?;
 
-    match response.status().is_success() {
-        true => Ok(String::from("POST request successful")),
-        false => Ok(String::from("POST request not successful")),
+    if response.status().is_success() {
+        Ok(String::from("POST request successful"))
+    } else {
+        let error = format!("POST request not successful: {:?}", response.status());
+        Ok(error)
     }
 }
 

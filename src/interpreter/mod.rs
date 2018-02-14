@@ -117,10 +117,10 @@ fn download_measurement(
     measurement_name: &str,
 ) -> Result<(), RustfluxError> {
     let query = queries::measurement(&context.host, &context.database, measurement_name);
-    let tags = get_tags_from_measurement(context, &measurement_name)?;
+    let tags = get_tags_from_measurement(context, measurement_name)?;
     let measurement_json = http_client::get(&query)?;
 
-    let file_name =
+    let _file_name =
         converter::json_to_line_protocol_file(&measurement_json, measurement_name, &tags)?;
 
     Ok(())
@@ -128,7 +128,8 @@ fn download_measurement(
 
 fn upload_measurement(context: &mut Context, file_name: &str) -> Result<(), RustfluxError> {
     let url = queries::write(&context.host, &context.database);
-    http_client::post(&url, &file_name);
+    let post_status = http_client::post(&url, file_name)?;
+    println!("{}", post_status);
 
     Ok(())
 }
