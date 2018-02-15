@@ -12,6 +12,7 @@ mod interpreter;
 mod command;
 mod context;
 mod queries;
+mod filesystem;
 
 fn main() {
     println!("{}", "\nInteractive influxdb tool \n".yellow());

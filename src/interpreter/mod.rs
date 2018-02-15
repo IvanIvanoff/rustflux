@@ -5,7 +5,8 @@ use queries;
 use http_client;
 use converter;
 use errors::RustfluxError;
-
+use filesystem;
+use chrono::prelude::*;
 ///
 pub fn execute(context: &mut Context, line: &str) -> Result<(), RustfluxError> {
     let command = Command::from_str(line);
@@ -22,6 +23,8 @@ pub fn execute(context: &mut Context, line: &str) -> Result<(), RustfluxError> {
         Ok(Command::DownloadMeasurement(measurement)) => {
             download_measurement(context, &measurement)?
         }
+
+        Ok(Command::DownloadDatabase) => download_database(context)?,
 
         Ok(Command::UploadMeasurement(file_name)) => upload_measurement(context, &file_name)?,
 
@@ -123,8 +126,16 @@ fn download_measurement(
     let tags = get_tags_from_measurement(context, measurement_name)?;
     let measurement_json = http_client::get(&query)?;
 
-    let _file_name =
-        converter::json_to_line_protocol_file(&measurement_json, measurement_name, &tags)?;
+    let line_protocol =
+        converter::json_to_line_protocol(&measurement_json, measurement_name, &tags)?;
+
+    let file_name =
+        filesystem::save_file_to_disk("/tmp/.rustflux", measurement_name, &line_protocol)?;
+
+    println!(
+        "Saving the measurement {} to file {}",
+        measurement_name, file_name
+    );
 
     Ok(())
 }
@@ -133,6 +144,30 @@ fn upload_measurement(context: &mut Context, file_name: &str) -> Result<(), Rust
     let url = queries::write(&context.host, &context.database);
     let post_status = http_client::post(&url, file_name)?;
     println!("{}", post_status);
+
+    Ok(())
+}
+
+fn download_database(context: &mut Context) -> Result<(), RustfluxError> {
+    let utc = Utc::now().timestamp();
+    let dir_name = format!("/tmp/.rustflux/{}_{}", &context.database, utc);
+
+    for measurement_name in get_measurements(context)? {
+        let query = queries::measurement(&context.host, &context.database, &measurement_name);
+        let tags = get_tags_from_measurement(context, &measurement_name)?;
+        let measurement_json = http_client::get(&query)?;
+
+        let line_protocol =
+            converter::json_to_line_protocol(&measurement_json, &measurement_name, &tags)?;
+
+        let _file_name =
+            filesystem::save_file_to_disk(&dir_name, &measurement_name, &line_protocol)?;
+    }
+
+    println!(
+        "Saving the database {} to folder {}",
+        &context.database, &dir_name
+    );
 
     Ok(())
 }

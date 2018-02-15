@@ -5,18 +5,13 @@ use errors::RustfluxError;
 use std::str::FromStr;
 use chrono::prelude::*;
 
-use std::io::prelude::*;
-use std::fs;
-use std::fs::File;
-use std::path::Path;
-
 /// Accepts the JSON returned from influxdb and converts
 /// it to line protocol, suitable for sending
-pub fn json_to_line_protocol_file(
+pub fn json_to_line_protocol(
     measurement_str: &str,
     measurement_name: &str,
     tags: &[String],
-) -> Result<String, RustfluxError> {
+) -> Result<Vec<String>, RustfluxError> {
     let mut line_protocol: Vec<String> = Vec::new();
 
     let json = json_from_str(measurement_str)?;
@@ -87,8 +82,7 @@ pub fn json_to_line_protocol_file(
         }
     }
 
-    let file_name = save_file_to_disk(measurement_name, &line_protocol)?;
-    Ok(file_name)
+    Ok(line_protocol)
 }
 
 pub fn json_strings_to_list(json_str: &str) -> Result<Vec<String>, RustfluxError> {
@@ -110,47 +104,6 @@ pub fn json_strings_to_list(json_str: &str) -> Result<Vec<String>, RustfluxError
 }
 
 // Helper functions
-
-fn save_file_to_disk(
-    measurement_name: &str,
-    line_protocol: &[String],
-) -> Result<String, RustfluxError> {
-    match fs::create_dir_all("/tmp/.rustflux") {
-        Ok(_) => {}
-        Err(_) => {
-            return Err(RustfluxError::IOError(String::from(
-                "Cannot create /tmp/.rustflux",
-            )))
-        }
-    };
-
-    let utc = Utc::now().timestamp();
-    let file_name = format!("/tmp/.rustflux/{}_{}", measurement_name, utc);
-    {
-        let path = Path::new(&file_name);
-
-        let mut file = match File::create(path) {
-            Ok(file) => file,
-            Err(err) => {
-                return Err(RustfluxError::IOError(format!(
-                    "Cannot create file for measurement: {}",
-                    err
-                )));
-            }
-        };
-
-        println!(
-            "Saving the measurement {} to a file {}",
-            measurement_name, file_name
-        );
-
-        for line in line_protocol.iter() {
-            let _ = file.write(line.as_bytes()).unwrap();
-            let _ = file.write(b"\n").unwrap();
-        }
-    }
-    Ok(file_name)
-}
 
 fn extract_column_names(json: &Value) -> Result<Vec<String>, RustfluxError> {
     let mut result: Vec<String> = Vec::new();
