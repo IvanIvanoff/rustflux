@@ -185,8 +185,9 @@ fn download_database(context: &mut Context, database: &str) -> Result<(), Rustfl
 fn upload_database(context: &mut Context, database_dir: &str) -> Result<(), RustfluxError> {
     let db_name = database_dir.split("/").collect::<Vec<&str>>();
     let db_name = String::from(*db_name.last().unwrap());
-    let db_name = db_name.split("_").collect::<Vec<&str>>();
-    let db_name = String::from(*db_name.first().unwrap());
+
+    let split: Vec<&str> = db_name.rsplitn(2, |c| c == '_').collect();
+    let db_name = String::from(*split.last().unwrap());
 
     println!("Uploading data to database: {}", db_name);
     context.database = db_name.clone();
