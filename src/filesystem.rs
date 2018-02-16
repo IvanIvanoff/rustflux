@@ -1,7 +1,11 @@
 use std::io::prelude::*;
-use std::fs;
 use std::fs::File;
 use std::path::Path;
+use std::fs;
+
+extern crate walkdir;
+use self::walkdir::WalkDir;
+
 use errors::RustfluxError;
 use chrono::prelude::*;
 
@@ -40,4 +44,19 @@ pub fn save_file_to_disk(
         }
     }
     Ok(file_name)
+}
+
+pub fn files_in_dir(dir: &str) -> Result<Vec<String>, RustfluxError> {
+    let mut files: Vec<String> = Vec::new();
+
+    let walker = WalkDir::new(dir).into_iter();
+
+    // skip the folder itself
+    for entry in walker.skip(1) {
+        let entry = entry.unwrap();
+        let file_name = format!("{}", entry.path().display());
+        files.push(file_name);
+    }
+
+    Ok(files)
 }

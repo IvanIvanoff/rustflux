@@ -7,8 +7,9 @@ pub enum Command {
     Connect(String),
     Use(String),
     DownloadMeasurement(String),
-    DownloadDatabase,
     UploadMeasurement(String),
+    DownloadDatabase,
+    UploadDatabase(String),
     ShowDatabases,
     ShowMeasurements,
     ShowTagsMeasurement(String),
@@ -47,10 +48,12 @@ impl FromStr for Command {
             Ok(Command::ShowMeasurements)
         } else if words.len() == 3 && is_same_command(vec!["download", "measurement"], &words) {
             Ok(Command::DownloadMeasurement(String::from(words[2])))
-        } else if words.len() == 2 && is_same_command(vec!["download", "database"], &words) {
-            Ok(Command::DownloadDatabase)
         } else if words.len() == 2 && is_same_command(vec!["upload"], &words) {
             Ok(Command::UploadMeasurement(String::from(words[1])))
+        } else if words.len() == 2 && is_same_command(vec!["download", "database"], &words) {
+            Ok(Command::DownloadDatabase)
+        } else if words.len() == 3 && is_same_command(vec!["upload", "database"], &words) {
+            Ok(Command::UploadDatabase(String::from(words[2])))
         } else if words.len() == 5 && is_same_command(vec!["show", "tag", "keys", "from"], &words) {
             Ok(Command::ShowTagsMeasurement(String::from(words[4])))
         } else {
@@ -78,6 +81,7 @@ impl fmt::Display for Command {
             Command::UploadMeasurement(ref measurement) => {
                 write!(f, "Upload measurement {}", measurement)
             }
+            Command::UploadDatabase(ref database) => write!(f, "Upload database {}", database),
             Command::ShowDatabases => write!(f, "Showing the databases"),
             Command::ShowMeasurements => write!(f, "Showing the measurements"),
             Command::ShowTagsMeasurement(ref file_name) => write!(

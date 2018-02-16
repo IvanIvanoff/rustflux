@@ -24,9 +24,13 @@ pub fn execute(context: &mut Context, line: &str) -> Result<(), RustfluxError> {
             download_measurement(context, &measurement)?
         }
 
+        Ok(Command::UploadMeasurement(measurement_file)) => {
+            upload_measurement(context, &measurement_file)?
+        }
+
         Ok(Command::DownloadDatabase) => download_database(context)?,
 
-        Ok(Command::UploadMeasurement(file_name)) => upload_measurement(context, &file_name)?,
+        Ok(Command::UploadDatabase(database_dir)) => upload_database(context, &database_dir)?,
 
         Ok(Command::ShowDatabases) => show_databases(context)?,
 
@@ -142,7 +146,7 @@ fn download_measurement(
 
 fn upload_measurement(context: &mut Context, file_name: &str) -> Result<(), RustfluxError> {
     let url = queries::write(&context.host, &context.database);
-    let post_status = http_client::post(&url, file_name)?;
+    let post_status = http_client::post_file(&url, file_name)?;
     println!("{}", post_status);
 
     Ok(())
@@ -168,6 +172,26 @@ fn download_database(context: &mut Context) -> Result<(), RustfluxError> {
         "Saving the database {} to folder {}",
         &context.database, &dir_name
     );
+
+    Ok(())
+}
+
+fn upload_database(context: &mut Context, database_dir: &str) -> Result<(), RustfluxError> {
+    let db_name = database_dir.split("/").collect::<Vec<&str>>();
+    let db_name = String::from(*db_name.last().unwrap());
+    let db_name = db_name.split("_").collect::<Vec<&str>>();
+    let db_name = String::from(*db_name.first().unwrap());
+
+    context.database = db_name.clone();
+
+    let url = queries::create_db(&context.host, &context.database);
+
+    let _ = http_client::post(&url)?;
+    for file_name in filesystem::files_in_dir(&database_dir)? {
+        let _post_status = upload_measurement(context, &file_name)?;
+    }
+
+    println!("Uploaded database from {}", &database_dir);
 
     Ok(())
 }
