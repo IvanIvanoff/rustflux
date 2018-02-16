@@ -40,6 +40,10 @@ pub fn execute(context: &mut Context, line: &str) -> Result<(), RustfluxError> {
             show_tags_from_measurement(context, &measurement)?
         }
 
+        Ok(Command::DropDatabase(database)) => drop_database(context, &database)?,
+
+        Ok(Command::DropMeasurement(measurement)) => drop_measurement(context, &measurement)?,
+
         Ok(Command::Unknown(_)) => println!("{}", command.unwrap()),
 
         Err(err) => {
@@ -192,6 +196,22 @@ fn upload_database(context: &mut Context, database_dir: &str) -> Result<(), Rust
     }
 
     println!("Uploaded database from {}", &database_dir);
+
+    Ok(())
+}
+
+fn drop_database(context: &mut Context, database: &str) -> Result<(), RustfluxError> {
+    let url = queries::drop_db(&context.host, &database);
+    let post_status = http_client::post(&url)?;
+    println!("{}", post_status);
+
+    Ok(())
+}
+
+fn drop_measurement(context: &mut Context, measurement: &str) -> Result<(), RustfluxError> {
+    let url = queries::drop_measurement(&context.host, &context.database, &measurement);
+    let post_status = http_client::post(&url)?;
+    println!("{}", post_status);
 
     Ok(())
 }
