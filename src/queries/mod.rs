@@ -25,3 +25,11 @@ pub fn write(host: &str, db: &str) -> String {
 pub fn create_db(host: &str, db: &str) -> String {
     host.to_string() + "/query?q=CREATE DATABASE " + db
 }
+
+pub fn drop_db(host: &str, db: &str) -> String {
+    host.to_string() + "/query?q=DROP DATABASE " + db
+}
+
+pub fn drop_measurement(host: &str, db: &str, measurement: &str) -> String {
+    host.to_string() + "/query?db=" + db + "&q=DROP MEASUREMENT " + measurement
+}

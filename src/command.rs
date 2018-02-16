@@ -13,6 +13,8 @@ pub enum Command {
     ShowDatabases,
     ShowMeasurements,
     ShowTagsMeasurement(String),
+    DropDatabase(String),
+    DropMeasurement(String),
     Unknown(String),
     Help,
     Info,
@@ -56,6 +58,10 @@ impl FromStr for Command {
             Ok(Command::UploadDatabase(String::from(words[2])))
         } else if words.len() == 5 && is_same_command(vec!["show", "tag", "keys", "from"], &words) {
             Ok(Command::ShowTagsMeasurement(String::from(words[4])))
+        } else if words.len() == 3 && is_same_command(vec!["drop", "database"], &words) {
+            Ok(Command::DropDatabase(String::from(words[2])))
+        } else if words.len() == 3 && is_same_command(vec!["drop", "measurement"], &words) {
+            Ok(Command::DropMeasurement(String::from(words[2])))
         } else {
             Ok(Command::Unknown(String::from(line)))
         }
@@ -89,6 +95,10 @@ impl fmt::Display for Command {
                 "Showing the tags from measurement from file {}",
                 file_name
             ),
+            Command::DropDatabase(ref database) => write!(f, "Drop database {}", database),
+            Command::DropMeasurement(ref measurement) => {
+                write!(f, "Drop measurement {}", measurement)
+            }
             Command::Unknown(ref line) => write!(f, "Ignoring unknown command - {}", line),
             Command::Help => write!(f, "Showing help"),
             Command::Info => write!(f, "Showing info"),
