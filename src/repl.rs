@@ -6,6 +6,27 @@ use interpreter;
 use context::Context;
 use errors::RustfluxError;
 
+pub fn start() -> Result<(), RustfluxError> {
+    let mut editor = Editor::<()>::new();
+
+    let mut context = Context::new()?;
+
+    loop {
+        match input("> ", &mut editor) {
+            Ok(input) => {
+                interpreter::execute(&mut context, &input)?;
+            }
+            Err(_) => {
+                return Err(RustfluxError::InputParse(String::from(
+                    "Cannot parse the input",
+                )))
+            }
+        }
+    }
+}
+
+// Helper functions
+
 fn input(prompt: &str, editor: &mut Editor<()>) -> Result<String, ReadlineError> {
     let line = editor.readline(prompt);
 
@@ -25,25 +46,6 @@ fn input(prompt: &str, editor: &mut Editor<()>) -> Result<String, ReadlineError>
         Err(err) => {
             println!("Error: {:?}", err);
             Err(err)
-        }
-    }
-}
-
-pub fn start() -> Result<(), RustfluxError> {
-    let mut editor = Editor::<()>::new();
-
-    let mut context = Context::new()?;
-
-    loop {
-        match input("> ", &mut editor) {
-            Ok(input) => {
-                interpreter::execute(&mut context, &input)?;
-            }
-            Err(_) => {
-                return Err(RustfluxError::InputParse(String::from(
-                    "Cannot parse the input",
-                )))
-            }
         }
     }
 }

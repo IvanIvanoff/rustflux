@@ -21,8 +21,8 @@ pub enum Command {
     Info,
 }
 
-// Check if the given command represented as a vector of strings is equal to the
-// input, represented as an array of strings
+/// Check if the given command represented as a vector of strings is equal to the
+/// input, represented as an array of strings
 fn is_same_command(commands: Vec<&str>, input: &[&str]) -> bool {
     if input.len() >= commands.len() {
         input.iter().zip(commands).all(|(s1, s2)| s1 == &s2)
