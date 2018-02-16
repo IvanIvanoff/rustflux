@@ -3,7 +3,8 @@ use errors::RustfluxError;
 
 use std::fs::File;
 
-///
+/// Sends a GET request to the given URL. Returns Ok(body) on success,
+/// Err(RustfluxError::GetRequest(reason)) otherwise
 pub fn get(url: &str) -> Result<String, RustfluxError> {
     match get_internal(url) {
         Ok(body) => Ok(body),
@@ -14,6 +15,8 @@ pub fn get(url: &str) -> Result<String, RustfluxError> {
     }
 }
 
+/// Sends a POST request to the given URL. Returns Ok(body) on success,
+/// Err(RustfluxError::PostRequest(reason)) otherwise
 pub fn post(url: &str) -> Result<String, RustfluxError> {
     match post_internal(url) {
         Ok(res) => Ok(res),
@@ -24,6 +27,8 @@ pub fn post(url: &str) -> Result<String, RustfluxError> {
     }
 }
 
+/// Sends a POST request to the given URL using the contents of the given file as a body.
+/// Returns Ok(body) on success, Err(RustfluxError::GetRequest(..)) otherwise
 pub fn post_file(url: &str, file_name: &str) -> Result<String, RustfluxError> {
     match post_file_internal(url, file_name) {
         Ok(res) => Ok(res),

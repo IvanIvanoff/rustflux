@@ -2,6 +2,7 @@ use std::str::FromStr;
 use std::fmt;
 use errors::RustfluxError;
 
+#[derive(PartialEq, Debug)]
 pub enum Command {
     IgnoreEmptyLine,
     Connect(String),
@@ -20,6 +21,8 @@ pub enum Command {
     Info,
 }
 
+// Check if the given command represented as a vector of strings is equal to the
+// input, represented as an array of strings
 fn is_same_command(commands: Vec<&str>, input: &[&str]) -> bool {
     if input.len() >= commands.len() {
         input.iter().zip(commands).all(|(s1, s2)| s1 == &s2)
@@ -68,12 +71,6 @@ impl FromStr for Command {
     }
 }
 
-impl fmt::Debug for Command {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_string())
-    }
-}
-
 impl fmt::Display for Command {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
@@ -104,4 +101,59 @@ impl fmt::Display for Command {
             Command::Info => write!(f, "Showing info"),
         }
     }
+}
+
+// TESTS
+
+#[test]
+fn test_command_parsing() {
+    assert_eq!(Command::IgnoreEmptyLine, Command::from_str("").unwrap());
+    assert_eq!(
+        Command::Unknown(String::from(
+            "xastduadjhhhhqhqhqhzzzz sauqywuqtugznnnsisiskq as"
+        )),
+        Command::from_str("xastduadjhhhhqhqhqhzzzz sauqywuqtugznnnsisiskq as").unwrap()
+    );
+    assert_eq!(
+        Command::DropDatabase("test_db".to_string()),
+        Command::from_str("drop database test_db").unwrap()
+    );
+    assert_eq!(
+        Command::DropMeasurement("test_ms".to_string()),
+        Command::from_str("drop measurement test_ms").unwrap()
+    );
+    assert_eq!(
+        Command::Connect("host".to_string()),
+        Command::from_str("connect host").unwrap()
+    );
+    assert_eq!(
+        Command::Use("db_name".to_string()),
+        Command::from_str("use db_name").unwrap()
+    );
+    assert_eq!(
+        Command::DropMeasurement("test_ms".to_string()),
+        Command::from_str("drop measurement test_ms").unwrap()
+    );
+    assert_eq!(
+        Command::DownloadMeasurement("test_ms".to_string()),
+        Command::from_str("download measurement test_ms").unwrap()
+    );
+    assert_eq!(
+        Command::ShowDatabases,
+        Command::from_str("show databases").unwrap()
+    );
+    assert_eq!(
+        Command::ShowMeasurements,
+        Command::from_str("show measurements").unwrap()
+    );
+    assert_eq!(
+        Command::DropMeasurement("test_ms".to_string()),
+        Command::from_str("drop measurement test_ms").unwrap()
+    );
+    assert_eq!(
+        Command::ShowTagsMeasurement("test_ms".to_string()),
+        Command::from_str("show tag keys from test_ms").unwrap()
+    );
+    assert_eq!(Command::Help, Command::from_str("help").unwrap());
+    assert_eq!(Command::Info, Command::from_str("info").unwrap());
 }
