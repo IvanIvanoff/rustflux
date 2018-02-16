@@ -9,7 +9,7 @@ pub enum Command {
     Use(String),
     DownloadMeasurement(String),
     UploadMeasurement(String),
-    DownloadDatabase,
+    DownloadDatabase(String),
     UploadDatabase(String),
     ShowDatabases,
     ShowMeasurements,
@@ -55,8 +55,8 @@ impl FromStr for Command {
             Ok(Command::DownloadMeasurement(String::from(words[2])))
         } else if words.len() == 2 && is_same_command(vec!["upload"], &words) {
             Ok(Command::UploadMeasurement(String::from(words[1])))
-        } else if words.len() == 2 && is_same_command(vec!["download", "database"], &words) {
-            Ok(Command::DownloadDatabase)
+        } else if words.len() == 3 && is_same_command(vec!["download", "database"], &words) {
+            Ok(Command::DownloadDatabase(String::from(words[2])))
         } else if words.len() == 3 && is_same_command(vec!["upload", "database"], &words) {
             Ok(Command::UploadDatabase(String::from(words[2])))
         } else if words.len() == 5 && is_same_command(vec!["show", "tag", "keys", "from"], &words) {
@@ -80,7 +80,7 @@ impl fmt::Display for Command {
             Command::DownloadMeasurement(ref measurement) => {
                 write!(f, "Download measurement {}", measurement)
             }
-            Command::DownloadDatabase => write!(f, "Download database"),
+            Command::DownloadDatabase(ref database) => write!(f, "Download database {}", database),
             Command::UploadMeasurement(ref measurement) => {
                 write!(f, "Upload measurement {}", measurement)
             }
@@ -137,6 +137,10 @@ fn test_command_parsing() {
     assert_eq!(
         Command::DownloadMeasurement("test_ms".to_string()),
         Command::from_str("download measurement test_ms").unwrap()
+    );
+    assert_eq!(
+        Command::DownloadDatabase("test_db".to_string()),
+        Command::from_str("download database test_db").unwrap()
     );
     assert_eq!(
         Command::ShowDatabases,

@@ -27,7 +27,7 @@ pub fn execute(context: &mut Context, line: &str) -> Result<(), RustfluxError> {
             upload_measurement(context, &measurement_file)?
         }
 
-        Ok(Command::DownloadDatabase) => download_database(context)?,
+        Ok(Command::DownloadDatabase(database_name)) => download_database(context, &database_name)?,
 
         Ok(Command::UploadDatabase(database_dir)) => upload_database(context, &database_dir)?,
 
@@ -160,12 +160,12 @@ fn upload_measurement(context: &mut Context, file_name: &str) -> Result<(), Rust
     Ok(())
 }
 
-fn download_database(context: &mut Context) -> Result<(), RustfluxError> {
+fn download_database(context: &mut Context, database: &str) -> Result<(), RustfluxError> {
     let utc = Utc::now().timestamp();
-    let dir_name = format!("/tmp/.rustflux/{}_{}", &context.database, utc);
+    let dir_name = format!("/tmp/.rustflux/{}_{}", &database, utc);
 
     for measurement_name in get_measurements(context)? {
-        let query = queries::measurement(&context.host, &context.database, &measurement_name);
+        let query = queries::measurement(&context.host, &database, &measurement_name);
         let tags = get_tags_from_measurement(context, &measurement_name)?;
         let measurement_json = http_client::get(&query)?;
 
@@ -176,10 +176,7 @@ fn download_database(context: &mut Context) -> Result<(), RustfluxError> {
             filesystem::save_file_to_disk(&dir_name, &measurement_name, &line_protocol)?;
     }
 
-    println!(
-        "Saving the database {} to folder {}",
-        &context.database, &dir_name
-    );
+    println!("Saving the database {} to folder {}", &database, &dir_name);
 
     Ok(())
 }
