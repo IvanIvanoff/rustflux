@@ -21,3 +21,7 @@ pub fn measurement(host: &str, db: &str, measurement: &str) -> String {
 pub fn write(host: &str, db: &str) -> String {
     host.to_string() + "/write?db=" + db
 }
+
+pub fn create_db(host: &str, db: &str) -> String {
+    host.to_string() + "/query?q=CREATE DATABASE " + db
+}
