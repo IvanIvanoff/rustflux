@@ -85,6 +85,8 @@ pub fn json_to_line_protocol(
     Ok(line_protocol)
 }
 
+/// Expects an influxdb response containing arrays of single strings. That are the results
+/// of `show databases` and `show measurements`
 pub fn json_strings_to_list(json_str: &str) -> Result<Vec<String>, RustfluxError> {
     let mut result: Vec<String> = Vec::new();
 
@@ -133,4 +135,168 @@ fn json_from_str(json_str: &str) -> Result<Value, RustfluxError> {
             "Cannot decode json",
         ))),
     }
+}
+
+// TESTS
+
+#[test]
+fn test_json_from_str_fail() {
+    assert_eq!(
+        Err(RustfluxError::JsonDecode(String::from(
+            "Cannot decode json"
+        ))),
+        json_from_str("}[}[asdaj not valid!!!! json asdasds")
+    );
+}
+
+#[test]
+fn test_json_from_str() {
+    let s = r###"{
+    "results": [
+        {
+            "statement_id": 0,
+            "series": [
+                {
+                    "name": "SAN",
+                    "columns": [
+                        "time",
+                        "block_number",
+                        "from_addr",
+                        "to_addr",
+                        "transaction_type",
+                        "trx_value"
+                    ],
+                    "values": [
+                        [
+                            "2017-07-04T12:12:08Z",
+                            3972817,
+                            "0xc58f14af29ec15bbbf2734fe7f4fe8bc4448d38f",
+                            "0x6dd5a9f47cfbc44c04a0a4452f0ba792ebfbcc9a",
+                            "in",
+                            5
+                        ],
+                        [
+                            "2017-07-12T08:03:11Z",
+                            4011221,
+                            "0xda2cf810c5718135247628689d84f94c61b41d6a",
+                            "0x6dd5a9f47cfbc44c04a0a4452f0ba792ebfbcc9a",
+                            "in",
+                            45000
+                        ]
+                    ]
+                }
+              ]
+            }
+        ]
+    }
+    "###;
+
+    assert!(json_from_str(s).is_ok());
+}
+
+#[test]
+fn test_extract_column_names() {
+    let s = r###"{
+    "results": [
+        {
+            "statement_id": 0,
+            "series": [
+                {
+                    "name": "SAN",
+                    "columns": [
+                        "time",
+                        "block_number",
+                        "from_addr",
+                        "to_addr",
+                        "transaction_type",
+                        "trx_value"
+                    ],
+                    "values": [
+                        [
+                            "2017-07-04T12:12:08Z",
+                            3972817,
+                            "0xc58f14af29ec15bbbf2734fe7f4fe8bc4448d38f",
+                            "0x6dd5a9f47cfbc44c04a0a4452f0ba792ebfbcc9a",
+                            "in",
+                            5
+                        ],
+                        [
+                            "2017-07-12T08:03:11Z",
+                            4011221,
+                            "0xda2cf810c5718135247628689d84f94c61b41d6a",
+                            "0x6dd5a9f47cfbc44c04a0a4452f0ba792ebfbcc9a",
+                            "in",
+                            45000
+                        ]
+                    ]
+                }
+              ]
+            }
+        ]
+    }
+    "###;
+
+    let json = json_from_str(s).unwrap();
+    let column_names = extract_column_names(&json).unwrap();
+    assert_eq!(
+        vec![
+            "time",
+            "block_number",
+            "from_addr",
+            "to_addr",
+            "transaction_type",
+            "trx_value",
+        ],
+        column_names
+    );
+}
+
+#[test]
+fn test_json_to_line_protocol() {
+    let s = r###"{
+    "results": [
+        {
+            "statement_id": 0,
+            "series": [
+                {
+                    "name": "SAN",
+                    "columns": [
+                        "time",
+                        "block_number",
+                        "from_addr",
+                        "to_addr",
+                        "transaction_type",
+                        "trx_value"
+                    ],
+                    "values": [
+                        [
+                            "2017-07-04T12:12:08Z",
+                            3972817,
+                            "0xc58f14af29ec15bbbf2734fe7f4fe8bc4448d38f",
+                            "0x6dd5a9f47cfbc44c04a0a4452f0ba792ebfbcc9a",
+                            "in",
+                            5
+                        ],
+                        [
+                            "2017-07-12T08:03:11Z",
+                            4011221,
+                            "0xda2cf810c5718135247628689d84f94c61b41d6a",
+                            "0x6dd5a9f47cfbc44c04a0a4452f0ba792ebfbcc9a",
+                            "in",
+                            45000
+                        ]
+                    ]
+                }
+              ]
+            }
+        ]
+    }
+    "###;
+
+    let line_protocol = json_to_line_protocol(&s, "SAN", &["transaction_type".to_string()]);
+    assert_eq!(
+    vec![
+    "SAN,transaction_type=in block_number=3972817,from_addr=\"0xc58f14af29ec15bbbf2734fe7f4fe8bc4448d38f\",to_addr=\"0x6dd5a9f47cfbc44c04a0a4452f0ba792ebfbcc9a\",trx_value=5 1499170328000000000",
+    "SAN,transaction_type=in block_number=4011221,from_addr=\"0xda2cf810c5718135247628689d84f94c61b41d6a\",to_addr=\"0x6dd5a9f47cfbc44c04a0a4452f0ba792ebfbcc9a\",trx_value=45000 1499846591000000000"],
+    line_protocol.unwrap());
 }

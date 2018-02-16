@@ -9,11 +9,9 @@ use self::walkdir::WalkDir;
 use errors::RustfluxError;
 use chrono::prelude::*;
 
-pub fn save_file_to_disk(
-    dir: &str,
-    measurement_name: &str,
-    line_protocol: &[String],
-) -> Result<String, RustfluxError> {
+/// Saves the contents of `data` to the file `dir/name`. Returns Ok(file_name) representing
+/// the full path of the saved file on success, `Err(Rustflux::IOError(reason))` otherwise
+pub fn save_file_to_disk(dir: &str, name: &str, data: &[String]) -> Result<String, RustfluxError> {
     match fs::create_dir_all(dir) {
         Ok(_) => {}
         Err(_) => {
@@ -24,7 +22,7 @@ pub fn save_file_to_disk(
     };
 
     let utc = Utc::now().timestamp();
-    let file_name = format!("{}/{}_{}", dir, measurement_name, utc);
+    let file_name = format!("{}/{}_{}", dir, name, utc);
     {
         let path = Path::new(&file_name);
 
@@ -38,7 +36,7 @@ pub fn save_file_to_disk(
             }
         };
 
-        for line in line_protocol.iter() {
+        for line in data.iter() {
             let _ = file.write(line.as_bytes()).unwrap();
             let _ = file.write(b"\n").unwrap();
         }
@@ -46,6 +44,8 @@ pub fn save_file_to_disk(
     Ok(file_name)
 }
 
+/// Walks the directory `dir` and gets the file names. Returns `Ok(file_names_vec)` on success,
+/// `Err(RustfluxError::IOError(reason))` otherwise
 pub fn files_in_dir(dir: &str) -> Result<Vec<String>, RustfluxError> {
     let mut files: Vec<String> = Vec::new();
 
@@ -59,4 +59,21 @@ pub fn files_in_dir(dir: &str) -> Result<Vec<String>, RustfluxError> {
     }
 
     Ok(files)
+}
+
+// TESTS
+
+#[test]
+fn test_extract_files_in_dir() {
+    let dir = "tests/test_extract_name_folder";
+    let files = files_in_dir(dir);
+
+    assert_eq!(
+        vec![
+            "tests/test_extract_name_folder/iv.txt",
+            "tests/test_extract_name_folder/vim.txt",
+            "tests/test_extract_name_folder/elixir.txt",
+        ],
+        files.unwrap()
+    );
 }

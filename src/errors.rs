@@ -1,5 +1,6 @@
 use std::fmt;
 
+#[derive(Debug, PartialEq)]
 pub enum RustfluxError {
     InputParse(String),
     JsonDecode(String),
@@ -21,11 +22,5 @@ impl fmt::Display for RustfluxError {
             }
             RustfluxError::IOError(ref error) => write!(f, "IO error: {}", error),
         }
-    }
-}
-
-impl fmt::Debug for RustfluxError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_string())
     }
 }

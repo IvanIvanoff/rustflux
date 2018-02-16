@@ -7,14 +7,13 @@ use converter;
 use errors::RustfluxError;
 use filesystem;
 use chrono::prelude::*;
-///
+
+/// Gets the current context and command as inputs and executes the command
 pub fn execute(context: &mut Context, line: &str) -> Result<(), RustfluxError> {
     let command = Command::from_str(line);
 
     match command {
-        Ok(Command::IgnoreEmptyLine) | Ok(Command::Help) | Ok(Command::Info) => {
-            println!("{}", command.unwrap())
-        }
+        Ok(Command::IgnoreEmptyLine) | Ok(Command::Help) => println!("{}", command.unwrap()),
 
         Ok(Command::Connect(host)) => context.host = host,
 
@@ -43,6 +42,11 @@ pub fn execute(context: &mut Context, line: &str) -> Result<(), RustfluxError> {
         Ok(Command::DropDatabase(database)) => drop_database(context, &database)?,
 
         Ok(Command::DropMeasurement(measurement)) => drop_measurement(context, &measurement)?,
+
+        Ok(Command::Info) => println!(
+            "Connectect to host: {} \n Using database: {}",
+            &context.host, &context.database
+        ),
 
         Ok(Command::Unknown(_)) => println!("{}", command.unwrap()),
 
