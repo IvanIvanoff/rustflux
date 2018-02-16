@@ -164,6 +164,7 @@ fn download_database(context: &mut Context, database: &str) -> Result<(), Rustfl
     let utc = Utc::now().timestamp();
     let dir_name = format!("/tmp/.rustflux/{}_{}", &database, utc);
 
+    context.database = String::from(database);
     for measurement_name in get_measurements(context)? {
         let query = queries::measurement(&context.host, &database, &measurement_name);
         let tags = get_tags_from_measurement(context, &measurement_name)?;
@@ -187,6 +188,7 @@ fn upload_database(context: &mut Context, database_dir: &str) -> Result<(), Rust
     let db_name = db_name.split("_").collect::<Vec<&str>>();
     let db_name = String::from(*db_name.first().unwrap());
 
+    println!("Uploading data to database: {}", db_name);
     context.database = db_name.clone();
 
     let url = queries::create_db(&context.host, &context.database);
